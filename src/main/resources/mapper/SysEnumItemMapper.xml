@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="org.anowls.sys.mapper.SysEnumItemMapper">
+
+    <select id="queryByCodes" resultType="org.anowls.sys.domain.view.SysEnumItemVO">
+        SELECT
+        sei.id,
+        sei.work_id AS workId,
+        sei.se_id AS seId,
+        se.se_ucode AS seCode,
+        sei.sei_parent_id AS seiParentId,
+        sei.sei_parent_code AS seiParentCode,
+        sei.sei_code AS seiCode,
+        sei.sei_name AS seiName,
+        sei.sei_desc AS seiDesc,
+        sei.pinyin AS pinYin,
+        sei.sei_sort AS seiSort,
+        sei.status AS status,
+        sei.creator_id AS creatorId,
+        sei.create_time AS createTime,
+        sei.modifier_id AS modifierId,
+        sei.modify_time AS modifyTime,
+        sei.deleted
+        FROM sys_platform.sys_enum_item sei
+        INNER JOIN sys_platform.sys_enum se ON sei.se_id = se.id AND se.deleted = 0 AND se.status = 1
+        WHERE sei.deleted = 0 AND sei.status = 1
+        <if test="list != null and list.size > 0">
+            AND se.se_ucode IN (
+            <foreach collection="list" item="item" separator=",">
+                #{item}
+            </foreach>
+            )
+        </if>
+    </select>
+</mapper>

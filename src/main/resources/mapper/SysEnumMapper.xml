@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="org.anowls.sys.mapper.SysEnumMapper">
+
+    <select id="findAll" resultType="org.anowls.sys.domain.view.SysEnumVO">
+        SELECT
+        se.id,
+        se.work_id AS workId,
+        se.se_ucode AS seUcode,
+        se.se_code AS seCode,
+        se.se_name AS seName,
+        se.se_desc AS seDesc,
+        se.se_level AS seLevel,
+        se.status,
+        se.creator_id AS creatorId,
+        se.create_time AS createTime,
+        se.modifier_id AS modifierId,
+        se.modify_time AS modifyTime,
+        se.deleted
+        FROM sys_platform.sys_enum se
+        WHERE se.deleted = 0 AND se.status = 1
+        <if test="name != null and name != ''">
+            <bind name="name" value="'%' + name + '%'" />
+            AND (se.se_ucode like #{name} OR se.se_name like #{name} OR se.se_desc like #{name})
+        </if>
+    </select>
+</mapper>

@@ -1,0 +1,19 @@
+spring:
+  application:
+    name: sys-platform
+  profiles:
+    active: 'local'
+
+server:
+  port: 8080
+  context-path: '/sys'
+
+---
+spring:
+  profiles: local
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    type: com.alibaba.druid.pool.DruidDataSource
+    url: jdbc:mysql://192.168.137.111:3306/sys_platform?autoReconnect=true&useUnicode=true&characterEncoding=utf8
+    username: root
+    password: Anowls@38

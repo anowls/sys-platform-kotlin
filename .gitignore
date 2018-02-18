@@ -1,0 +1,24 @@
+### Gradle template
+.gradle
+build
+
+### JetBrains template
+.idea
+*.iml
+
+# IntelliJ
+out
+
+### Java template
+# Compiled class file
+*.class
+
+# Log file
+*.log
+
+# Package Files #
+*.war
+*.ear
+*.zip
+*.tar.gz
+*.rar
