@@ -11,6 +11,7 @@ out
 
 ### Java template
 # Compiled class file
+src/test/
 *.class
 
 # Log file
@@ -22,3 +23,6 @@ out
 *.zip
 *.tar.gz
 *.rar
+
+### Jrebel template
+src/main/resources/rebel.xml
