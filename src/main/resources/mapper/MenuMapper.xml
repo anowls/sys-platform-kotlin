@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="org.anowls.sys.mapper.MenuMapper">
+
+    <select id="getByRoleIdIn" resultType="org.anowls.sys.domain.view.MenuVO">
+        SELECT DISTINCT
+        parentMenu.id,
+        parentMenu.work_id AS workId,
+        parentMenu.app_id AS appId,
+        parentMenu.sf_id AS sfId,
+        parentMenu.open_type AS openType,
+        parentMenu.open_url AS openUrl,
+        parentMenu.sm_code AS smCode,
+        parentMenu.sm_name AS smName,
+        parentMenu.sm_caption AS smCaption,
+        parentMenu.sm_parent_id AS smParentId,
+        parentMenu.sm_level AS smLevel,
+        parentMenu.sm_icon AS smIcon,
+        parentMenu.sort_number AS sortNumber,
+        parentMenu.component,
+        parentMenu.status
+        FROM system_menu parentMenu
+        <if test="isAdmin == false">
+            INNER JOIN system_menu childMenu ON childMenu.menu_code_path LIKE CONCAT(parentMenu.menu_code_path, '%')
+            INNER JOIN (
+            SELECT sf.id FROM system_feature sf
+            WHERE EXISTS(SELECT srf.id FROM system_role_feature srf WHERE srf.deleted = 0 AND
+            srf.sf_id
+            = sf.id AND sf.status = 1 and sf.deleted = 0 AND sf.is_menu = 1
+            <if test="roleIds != null and roleIds.size() > 0">
+                AND srf.role_id IN (
+                <foreach collection="roleIds" item="roleId" separator=",">
+                    #{roleId}
+                </foreach>
+                )
+            </if>
+            )
+            GROUP BY sf.id
+            UNION
+            SELECT sf.id FROM system_feature sf
+            WHERE EXISTS(SELECT ssf.id FROM system_station_feature ssf WHERE ssf.deleted = 0 AND
+            ssf.sf_id
+            = sf.id AND sf.status = 1 and sf.deleted = 0 AND sf.is_menu = 1
+            <if test="stationIds != null and stationIds.size() > 0">
+                AND ssf.station_id in (
+                <foreach collection="stationIds" item="item" separator=",">
+                    #{item}
+                </foreach>
+                )
+            </if>
+            )
+            GROUP BY sf.id
+            ) sf
+            ON childMenu.sf_id = sf.id
+        </if>
+        WHERE parentMenu.status = 1 AND parentMenu.deleted = 0
+        <if test="appLevel == 1 || appLevel == 2">
+            AND EXISTS(SELECT sa.id FROM system_application sa WHERE sa.deleted = 0 AND
+            sa.status = 1 AND sa.id = parentMenu.app_id
+            AND sa.app_level = #{appLevel})
+        </if>
+        ORDER BY parentMenu.sort_number
+    </select>
+
+    <select id="getByAppId" resultType="org.anowls.sys.domain.view.MenuVO">
+        SELECT t1.id,
+        t1.work_id AS workId,
+        t1.app_id AS appId,
+        t1.sf_id AS sfId,
+        t1.open_type AS openType,
+        t1.open_url AS openUrl,
+        t1.sm_code AS smCode,
+        t1.sm_name AS smName,
+        t1.sm_caption AS smCaption,
+        t1.sm_parent_id AS smParentId,
+        t1.sm_level AS smLevel,
+        t1.sm_icon AS smIcon,
+        t1.sort_number AS sortNumber,
+        t1.status AS status
+        FROM system_menu t1
+        WHERE t1.app_id = #{appId}
+        ORDER BY t1.sort_number
+    </select>
+
+    <delete id="deleteByAppId">
+        DELETE FROM system_menu WHERE app_id = #{appId}
+    </delete>
+
+    <insert id="insertMenus" databaseId="MySQL">
+        insert into
+        system_menu(id,app_id,sm_code,sm_name,sm_parent_id,sm_level,sf_id,sort_number,sm_icon,sm_caption,open_type,open_url,status,menu_code,menu_code_path,component,creator_id,create_time)
+        values
+        <foreach collection="list" item="item" index="index" separator=",">
+            (#{item.id},#{item.appId},
+            #{item.smCode},#{item.smName},
+            #{item.smParentId},#{item.smLevel},
+            #{item.sfId},#{item.smSort},
+            #{item.smIcon},#{item.smCaption},
+            #{item.openType},#{item.openUrl},#{item.status}, #{item.menuCode},
+            #{item.menuCodePath},#{item.component},#{item.creatorId},#{item.createTime})
+        </foreach>
+    </insert>
+    <insert id="insertMenus" databaseId="Oracle">
+        insert into system_menu
+        (id,app_id,sm_code,sm_name,sm_parent_id,sm_level,sf_id,sort_number,sm_icon,sm_caption,
+        open_type,open_url,status,menu_code,menu_code_path,component,creator_id,create_time)
+        <foreach collection="list" item="item" index="index" separator="union all">
+            SELECT
+            #{item.id},
+            #{item.appId},
+            #{item.smCode},
+            #{item.smName},
+            #{item.smParentId},
+            #{item.smLevel},
+            #{item.sfId},
+            #{item.smSort},
+            #{item.smIcon},
+            #{item.smCaption},
+            #{item.openType},
+            #{item.openUrl},
+            #{item.status},#{item.menuCode},
+            #{item.menuCodePath},#{item.component},#{item.creatorId},#{item.createTime}
+            FROM dual
+        </foreach>
+    </insert>
+</mapper>

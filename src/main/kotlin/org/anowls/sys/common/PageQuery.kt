@@ -6,14 +6,14 @@ import org.springframework.util.StringUtils
 
 data class PageQuery(val page : Int = 0, val size : Int = 10, private val filter : String = "",  private val order : String = "") {
 
-    fun convertFilterToMap() : Map<String, String>? {
+    fun convertFilterToMap(): Map<String, Any?> {
         if (StringUtils.isEmpty(this.filter)) {
-            return null
+            return emptyMap()
         }
         val list : List<String> = Splitter.on("").omitEmptyStrings().trimResults().splitToList(this.filter)
 
         if (CollectionUtils.isEmpty(list)) {
-            return null
+            return emptyMap()
         }
         val map : Map<String, String> = HashMap()
         val var3  = list.iterator()

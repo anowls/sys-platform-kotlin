@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="org.anowls.sys.mapper.AccountMapper">
+    <sql id="baseSql">
+        SELECT
+        t1.id as id,
+        t1.work_id as workId,
+        t1.org_id as orgId,
+        t1.sys_code as systemCode,
+        t1.login_name as logonName,
+        t1.password_verify as passwordVerify,
+        t1.user_name as userName,
+        t1.short_name as shortName,
+        t1.theme as theme,
+        t1.account_avatar as accountAvatar,
+        t1.contact_number as contactNumber,
+        t1.mail as mail,
+        t1.status as status,
+        t1.id_card as idCard,
+        t1.sex_code as sexCode,
+        t1.user_type as userType,
+        t1.init_type,
+        t1.pinyin
+        FROM sys_account t1
+    </sql>
+
+    <select id="findAll" resultType="org.anowls.sys.domain.view.AccountVO">
+        SELECT
+        DISTINCT
+        t.id as id,
+        t.logon_name as logonName,
+        t.password_verify as passwordVerify,
+        t.user_name as userName,
+        t.short_name as shortName,
+        t.theme as theme,
+        t.account_avatar as accountAvatar,
+        t.status as status,
+        t.creator_id as creatorId,
+        t.create_time as createTime,
+        case when uot.org_default=1 then so.org_name else '' END as orgName,
+        t.id_card as idCard
+        FROM
+        system_users t
+        inner join system_user_org uot on t.id=uot.user_id AND uot.org_default = 1
+        inner join system_organization so on uot.org_id = so.id
+        <where>
+            AND t.deleted = 0
+            <if test='isIncludeChild == "0"'>
+                <if test="orgId != null and orgId !=''">
+                    AND so.id = #{orgId} AND so.STATUS=1
+                </if>
+            </if>
+            <if test='isIncludeChild == "1"'>
+                <bind name="orgPathCode" value="orgPathCode+'%'"/>
+                AND so.org_code_path like #{orgPathCode}
+            </if>
+            <if test="keywords!=null and keywords!=''">
+                <bind name="keywords" value="'%'+keywords+'%'"/>
+                AND (t.logon_name like #{keywords} or t.user_name like #{keywords} or t.short_name
+                like #{keywords} OR t.id_card LIKE #{keywords})
+            </if>
+            <if test="status!=null and status!=''">
+                AND t.status = #{status}
+            </if>
+            <if test="isAdmin !=true">
+                AND uot.ORG_ID IN (
+                SELECT sua.upper_org_id
+                FROM system_user_org_authority sua
+                WHERE sua.user_id = #{userId} and sua.org_authority=1)
+                and t.id != #{userId}
+            </if>
+            <if test="(roleId != null and roleId != '') or (roleCode != null and roleCode != '')">
+                AND EXISTS (
+                select usr.id
+                from system_user_role usr
+                INNER JOIN system_role sr on usr.role_id=sr.id
+                where usr.user_id = t.id
+                <if test="roleId !=null and roleId !=''">
+                    AND usr.role_id=#{roleId}
+                </if>
+                <if test="roleCode != null and roleCode != ''">
+                    AND sr.role_code=#{roleCode}
+                </if>
+                )
+            </if>
+        </where>
+    </select>
+
+    <select id="findByIdIn" resultType="org.anowls.sys.domain.view.AccountVO">
+        <include refid="baseSql"/>
+        WHERE t1.deleted = 0 AND t1.id IN
+        <foreach collection="list" item="item" separator="," open="(" close=")" index="index">
+            #{item}
+        </foreach>
+    </select>
+
+    <select id="findByCondition" resultType="org.anowls.sys.domain.view.AccountVO">
+        <include refid="baseSql"/>
+        WHERE t1.deleted = 0
+        <if test="logonName != null ">
+            AND t1.logon_name = #{logonName}
+        </if>
+        <if test="id != null ">
+            AND t1.id = #{id}
+        </if>
+        <if test="idCard != null ">
+            AND t1.id_card = #{idCard}
+        </if>
+        <if test="sysCode != null ">
+            AND t1.sys_code = #{sysCode}
+        </if>
+    </select>
+
+    <select id="getByLoginNames" resultType="org.anowls.sys.domain.view.AccountVO">
+        <include refid="baseSql"/>
+        WHERE t1.deleted = 0 AND t1.login_name in
+        <foreach collection="list" item="name" separator="," open="(" close=")" index="index">
+            #{name}
+        </foreach>
+    </select>
+
+    <select id="getBySysCodes" resultType="org.anowls.sys.domain.view.AccountVO">
+        <include refid="baseSql"/>
+        WHERE t1.deleted = 0 AND t1.sys_code in
+        <foreach collection="list" item="code" separator="," open="(" close=")">
+            #{code}
+        </foreach>
+    </select>
+
+    <select id="getByIdCards" resultType="org.anowls.sys.domain.view.AccountVO">
+        <include refid="baseSql"/>
+        WHERE t1.deleted = 0 AND t1.id_card in
+        <foreach collection="list" item="item" separator="," open="(" close=")">
+            #{item}
+        </foreach>
+    </select>
+
+    <select id="checkNameAndIdCard" resultType="java.lang.String">
+        SELECT
+        CONCAT( #{logonName},': 登录账号已存在') as msg
+        FROM sys_account t1
+        WHERE t1.deleted = 0
+        AND t1.logon_name = #{logonName}
+        <if test="id != null and id != ''">
+            and t1.id != #{id}
+        </if>
+        union all
+        SELECT
+        CONCAT(#{idCard},': 身份证已存在') as msg
+        FROM sys_account t1
+        WHERE t1.deleted = 0
+        AND t1.id_card = #{idCard}
+        <if test="id != null and id != ''">
+            and t1.id != #{id}
+        </if>
+        union all
+        SELECT
+        CONCAT(#{idCard},': 身份证号在系统中与其他用户的登录账号重复') as msg
+        FROM sys_account t1
+        WHERE t1.deleted = 0
+        AND t1.logon_name = #{idCard}
+        <if test="id != null and id != ''">
+            and t1.id != #{id}
+        </if>
+        union all
+        SELECT
+        CONCAT(#{logonName},': 登录账号在系统中与其他用户的身份证号重复') as msg
+        FROM sys_account t1
+        WHERE t1.deleted = 0
+        AND t1.id_card=#{logonName}
+        <if test="id != null and id != ''">
+            and t1.id != #{id}
+        </if>
+    </select>
+</mapper>

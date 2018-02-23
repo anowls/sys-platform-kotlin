@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="org.anowls.sys.mapper.ApplicationMapper">
+
+    <sql id="findCondition">
+        <where>
+            <if test="title != null and title != ''">
+                <bind name="title" value="'%' + title + '%'"/>
+                AND (t1.app_code like #{title} or t1.app_name LIKE #{title} or t1.app_desc LIKE
+                #{title} or t1.app_alias
+                LIKE #{title})
+            </if>
+        </where>
+    </sql>
+    <select id="findAll" resultType="org.anowls.sys.domain.view.ApplicationVO">
+        SELECT
+        t1.id as id,
+        t1.work_id as workId,
+        t1.app_group_id as appGroupId,
+        t1.app_code as appCode,
+        t1.app_name as appName,
+        t1.app_alias as appAlias,
+        t1.app_level as appLevel,
+        t1.app_target as appTarget,
+        t1.app_url as appUrl,
+        t1.app_run_url as appRunUrl,
+        t1.app_icon as appIcon,
+        t1.app_desc as appDesc,
+        t1.sort_number as appSort,
+        t1.status as status,
+        t1.app_company as appCompany,
+        t1.company_url as companyUrl,
+        t1.company_email as companyEmail,
+        t1.company_phone as companyPhone,
+        t1.linkman as linkman,
+        t1.contact_phone as contactPhone,
+        t2.ag_name as appGroupName,
+        t1.contact_email as contactEmail
+        FROM sys_application t1
+        INNER JOIN sys_app_group t2 on t1.app_group_id = t2.id
+        <include refid="findCondition"/>
+    </select>
+
+    <sql id="baseSql">
+        SELECT
+        t1.id,
+        t1.app_group_id as appGroupId,
+        t1.app_code as appCode,
+        t1.app_name as appName,
+        t1.app_alias as appAlias,
+        t1.app_level as appLevel,
+        t1.app_target as appTarget,
+        t1.app_url as appUrl,
+        t1.app_run_url as appRunUrl,
+        t1.app_icon as appIcon,
+        t1.app_desc as appDesc,
+        t1.sort_number as sortNumber,
+        t1.status as status,
+        t1.app_company as appCompany,
+        t1.company_url as companyUrl,
+        t1.company_email as companyEmail,
+        t1.company_phone as companyPhone,
+        t1.linkman as linkman,
+        t1.contact_phone as contactPhone,
+        t1.contact_email as contactEmail,
+        t2.id as appGroupId,t2.ag_code as appGroupCode,
+        t2.ag_name as appGroupName,
+        t2.sort_number as appGroupSort
+        FROM sys_application t1
+        INNER JOIN sys_app_group t2 on t1.app_group_id = t2.id
+    </sql>
+
+    <select id="getByRoleIdIn" resultType="org.anowls.sys.domain.view.ApplicationVO">
+        <include refid="baseSql"/>
+        <if test="isAdmin == false">
+            INNER JOIN (SELECT t1.APP_ID
+            FROM (
+            SELECT
+            t1.sf_id AS sf_id
+            FROM sys_role t
+            JOIN sys_role_feature t1 ON t.id = t1.role_id
+            JOIN sys_feature t3 ON t1.sf_id = t3.id
+            JOIN sys_account_role t2 ON t.id = t2.role_id AND t2.deleted = 0 AND t2.user_id=#{userId}
+            WHERE t.status = 1 AND t.deleted = 0
+            <if test="roleIds != null and roleIds.size() > 0">
+                AND t2.role_id IN (
+                <foreach collection="roleIds" item="roleId" separator=",">
+                    #{roleId}
+                </foreach>
+                )
+            </if>
+            group by t1.sf_id
+        </if>
+        WHERE t1.status = 1 AND t1.deleted = 0
+        <if test="appLevel == 1 || appLevel == 2">
+            AND t1.app_level = #{appLevel}
+        </if>
+        ORDER BY t1.sort_number asc
+    </select>
+
+</mapper>

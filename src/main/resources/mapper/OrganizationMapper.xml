@@ -1,0 +1,340 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="org.anowls.sys.mapper.OrganizationMapper">
+
+    <select id="query" parameterType="java.util.Map"
+            resultType="org.anowls.sys.domain.view.OrganizationVO">
+        SELECT
+        t.id as id,
+        t.org_parent_id as orgparentid,
+        t.org_code as orgcode,
+        t.org_code_path as orgcodepath,
+        t.org_name as orgname,
+        t.org_name_path as orgnamepath,
+        t.org_short_name as orgshortname,
+        t.org_level as orglevel,
+        t.org_sort as orgsort,
+        t.status as status,
+        t.org_short_code as orgShortCode,
+        t.creator_id as creatorid,
+        t.create_time as createid,
+        t.org_type as orgtype,
+        t.org_logo as orglogo,
+        t.org_grade as orggrade,
+        t1.org_name as orgparentname
+        FROM
+        system_organization t
+        LEFT JOIN system_organization t1 on t.org_parent_id=t1.id
+        <where>
+            AND t.deleted = 0
+            <if test="keywords!=null and keywords!=''">
+                <bind name="keywords" value="'%'+keywords+'%'"/>
+                AND (t.ORG_NAME like #{keywords} OR t.ORG_SHORT_NAME like #{keywords} )
+            </if>
+            <if test="status!=null and status!=''">
+                AND t.STATUS = #{status}
+            </if>
+            <if test='isIncludeChild == "0"'>
+                AND t.ORG_PARENT_ID=#{orgId}
+                <if test="isAdmin==false">
+                    AND (t.ID in (SELECT upper_org_id FROM system_user_org_authority where
+                    user_id=#{userId} and
+                    org_authority=1)
+                    )
+                </if>
+            </if>
+            <if test='isIncludeChild == "1"'>
+
+                <if test="isAdmin==false">
+                    AND (t.ID in ( SELECT so.id FROM system_user_org_authority t1 INNER JOIN
+                    system_organization so ON t1.upper_org_id = so.id
+                    WHERE so.org_code_path LIKE '${orgCodePath}%' and
+                    user_id=#{userId} and
+                    org_authority=1)
+                    )
+                </if>
+                <if test="isAdmin==true">
+                    and(t.id in (select id from system_organization where org_code_path LIKE
+                    '${orgCodePath}%'))
+                </if>
+                and t.id !=#{orgId}
+            </if>
+
+        </where>
+        ORDER BY t.ORG_LEVEL,t.ORG_SORT
+    </select>
+
+    <select id="getLastCode" resultType="java.lang.String">
+        select max(org.org_code) from system_organization org
+        <where>
+            <choose>
+                <when test="parentId!=null and parentId!=''">
+                    AND org.org_parent_id=#{parentId}
+                </when>
+                <otherwise>
+                    AND (org.org_parent_id is NULL OR org.org_parent_id='')
+                </otherwise>
+            </choose>
+        </where>
+    </select>
+
+    <select id="getChildOrgs"
+            resultType="org.anowls.sys.domain.view.OrganizationVO">
+        SELECT
+        t1.id as id,
+        t1.work_id as workId,
+        t1.org_parent_id as orgParent_id,
+        t1.org_code as orgCode,
+        t1.org_code_path as orgCode_path,
+        t1.org_name as orgName,
+        t1.org_name_path as orgName_path,
+        t1.org_short_name as orgShort_name,
+        t1.org_level as orgLevel,
+        t1.org_short_code as orgShortCode,
+        t1.org_sort as orgSort,
+        t1.org_logo as orgLogo,
+        t1.org_grade as orgGrade,
+        t1.status as status,
+        t1.org_type as orgType
+        FROM system_organization t1
+        <where>
+            <if test="pathCode != null and pathCode != ''">
+                <!--<bind name="pathCode" value="pathCode+'%'"/>-->
+                AND t1.org_code_path like '${pathCode}%'
+                AND t1.org_code_path != #{pathCode}
+            </if>
+        </where>
+    </select>
+
+    <select id="getOrgs"
+            resultType="org.anowls.sys.domain.view.OrganizationVO">
+        SELECT
+        t.id,
+        t.work_id as workId,
+        t.org_parent_id AS orgParentId,
+        t.org_code AS orgCode,
+        t.org_code_path AS orgCodePath,
+        t.org_name AS orgName,
+        t.org_name AS label,
+        t.org_name_path AS orgNamePath,
+        t.org_short_name AS orgShortName,
+        t.org_short_code as orgShortCode,
+        t.org_level AS orgLevel,
+        t.org_sort AS orgSort,
+        t.status AS status,
+        t.org_logo AS orgLogo,
+        t.org_grade AS orgGrade,
+        <if test="isAdmin ==false">
+
+            t1.org_default AS orgDefault,
+            t1.org_authority as orgAuthority
+        </if>
+        <if test="isAdmin ==true">
+            0 AS orgDefault,
+            1 as orgAuthority
+        </if>
+        FROM system_organization t
+        <if test="isAdmin ==false">
+            INNER JOIN system_user_org_authority t1 on t.id = t1.upper_org_id and t1.USER_ID =
+            #{userId}
+        </if>
+        where t.status=1 AND t.deleted = 0
+        ORDER BY t.ORG_LEVEL,t.ORG_SORT
+    </select>
+    <select id="getChildOrgTrees" resultType="org.anowls.sys.domain.view.OrganizationVO">
+        SELECT
+        t.id,
+        t.work_id as workId,
+        t.org_parent_id AS orgParentId,
+        t.org_code AS orgCode,
+        t.org_code_path AS orgCodePath,
+        t.org_name AS orgName,
+        t.org_name AS label,
+        t.org_name_path AS orgNamePath,
+        t.org_short_name AS orgShortName,
+        t.org_short_code as orgShortCode,
+        t.org_level AS orgLevel,
+        t.org_sort AS orgSort,
+        t.status AS status,
+        t.org_logo AS orgLogo,
+        t.org_grade AS orgGrade,
+        <if test="isAdmin ==false">
+
+            t1.org_default AS orgDefault,
+            t1.org_authority as orgAuthority
+        </if>
+        <if test="isAdmin ==true">
+            0 AS orgDefault,
+            1 as orgAuthority
+        </if>
+        FROM system_organization t
+        <if test="isAdmin ==false">
+            INNER JOIN system_user_org_authority t1 on t.id = t1.upper_org_id and t1.USER_ID =
+            #{userId} and t1.org_authority=1
+        </if>
+        where t.status=1 AND t.deleted = 0
+        ORDER BY t.ORG_LEVEL,t.ORG_SORT
+    </select>
+    <select id="getDefaultByUserId" resultType="org.anowls.sys.domain.view.OrganizationVO">
+        SELECT
+        DISTINCT
+        t1.id as id,
+        t1.work_id as workId,
+        t1.org_parent_id as orgParentId,
+        t1.org_code as orgCode,
+        t1.org_code_path as orgCodePath,
+        t1.org_name as orgName,
+        t1.org_name_path as orgNamePath,
+        t1.org_short_name as orgShortName,
+        t1.org_short_code as orgShortCode,
+        t1.org_level as orgLevel,
+        t1.org_sort as orgSort,
+        t1.org_logo as orgLogo,
+        t1.org_grade as orgGrade,
+        t1.status as status,
+        t1.org_type as orgType
+        FROM system_organization t1
+        INNER JOIN system_user_org t2 on t1.id = t2.org_id and t2.user_id=#{userId}
+        where t1.deleted=0 and t1.status=1 and t2.deleted=0 and t2.status=1
+        and t2.org_default=1
+    </select>
+
+    <select id="getDefaultListByUserId" resultType="org.anowls.sys.domain.view.OrganizationVO">
+        SELECT
+        DISTINCT
+        t1.id as id,
+        t1.work_id as workId,
+        t1.org_parent_id as orgParentId,
+        t1.org_code as orgCode,
+        t1.org_code_path as orgCodePath,
+        t1.org_name as orgName,
+        t1.org_name_path as orgNamePath,
+        t1.org_short_code as orgShortCode,
+        t1.org_short_name as orgShortName,
+        t1.org_level as orgLevel,
+        t1.org_sort as orgSort,
+        t1.org_logo as orgLogo,
+        t1.org_grade as orgGrade,
+        t1.status as status,
+        t1.org_type as orgType
+        FROM system_organization t1
+        INNER JOIN system_user_org t2 on t1.id = t2.org_id and t2.user_id=#{userId} and t2.org_default=1
+        where t1.deleted=0 and t1.status=1 and t2.deleted=0 and t2.status=1
+    </select>
+
+    <select id="getParentTreeById" resultType="java.lang.String">
+        SELECT parentOrg.id FROM system_organization childOrg
+        INNER JOIN system_organization parentOrg ON childOrg.org_code_path LIKE CONCAT(parentOrg.org_code_path,'%')
+        where childOrg.id=#{id}
+    </select>
+
+    <select id="getChildrenIds" resultType="java.lang.String">
+        SELECT
+        childOrg.id
+        FROM system_organization childOrg
+        INNER JOIN system_organization parentOrg
+        ON childOrg.org_code_path LIKE CONCAT(parentOrg.org_code_path,'%')
+        where parentOrg.id=#{id}
+    </select>
+
+    <select id="getChildIdsByCodePath" resultType="java.util.Map">
+        SELECT
+        t1.id as "id"
+        FROM system_organization t1
+        <where>
+            <if test="pathCode != null and pathCode != ''">
+                <bind name="pathCode" value="pathCode+'%'"/>
+                AND t1.org_code_path like #{pathCode}
+            </if>
+        </where>
+    </select>
+
+    <select id="getParentOrgsById" resultType="org.anowls.sys.domain.view.OrganizationVO">
+        SELECT
+        parentOrg.id as id,
+        parentOrg.work_id as workId,
+        parentOrg.org_parent_id as orgParentId,
+        parentOrg.org_code as orgCode,
+        parentOrg.org_code_path as orgCodePath,
+        parentOrg.org_name as orgName,
+        parentOrg.org_short_code as orgShortCode,
+        parentOrg.org_name_path as orgNamePath,
+        parentOrg.org_short_name as orgShortName,
+        parentOrg.org_level as orgLevel,
+        parentOrg.org_sort as orgSort,
+        parentOrg.org_logo as orgLogo,
+        parentOrg.org_grade as orgGrade,
+        parentOrg.status as status,
+        parentOrg.org_type as orgType
+        FROM system_organization childOrg
+        INNER JOIN system_organization parentOrg ON childOrg.org_code_path LIKE CONCAT(parentOrg.org_code_path,'%')
+        where childOrg.id=#{id} order BY orgLevel,orgCodePath
+    </select>
+
+    <select id="getOrgList" resultType="org.anowls.sys.domain.view.OrganizationVO">
+        SELECT t1.id as id,
+        t1.work_id as workId,
+        t1.org_parent_id as orgParentId,
+        t1.org_code as orgCode,
+        t1.org_code_path as orgCodePath,
+        t1.org_name as orgName,
+        t1.org_name_path as orgNamePath,
+        t1.org_short_name as orgShortName,
+        t1.org_short_code as orgShortCode,
+        t1.org_level as orgLevel,
+        t1.org_sort as orgSort,
+        t1.org_logo as orgLogo,
+        t1.org_grade as orgGrade,
+        t1.status as status,
+        t1.org_type as orgType FROM system_user_org_authority t2
+        INNER JOIN system_organization t1 ON t2.upper_org_id = t1.id
+        WHERE t2.user_id=#{userId}
+        <if test="orgGrades!=null">
+            AND t1.org_grade IN (
+            <foreach collection="orgGrades" item="item" separator=",">
+                #{item}
+            </foreach>
+            )
+        </if>
+        order BY t1.org_level,t1.org_code_path
+    </select>
+
+    <select id="getById" resultType="org.anowls.sys.domain.view.OrganizationVO">
+        SELECT t1.id as id,
+        t1.work_id as workId,
+        t1.org_parent_id as orgParentId,
+        t1.org_code as orgCode,
+        t1.org_code_path as orgCodePath,
+        t1.org_name as orgName,
+        t1.org_short_code as orgShortCode,
+        t1.org_name_path as orgNamePath,
+        t1.org_short_name as orgShortName,
+        t1.org_level as orgLevel,
+        t1.org_sort as orgSort,
+        t1.org_logo as orgLogo,
+        t1.org_grade as orgGrade,
+        t1.status as status,
+        t1.org_type as orgType
+        from system_organization t1 where t1.id = #{id}
+    </select>
+
+    <select id="countByCondition" resultType="java.lang.Long">
+        SELECT
+        count(t1.id)
+        FROM system_organization t1
+        where t1.deleted=0
+        <if test="id!=null and id!=''">
+            AND t1.id !=#{id}
+        </if>
+        <if test="parentId!=null and parentId!=''">
+            AND t1.org_parent_id =#{parentId}
+        </if>
+        <if test="orgName!=null and orgName!=''">
+            AND t1.org_name =#{orgName}
+        </if>
+        <if test="orgShortCode!=null and orgShortCode!=''">
+            AND t1.org_short_code =#{orgShortCode}
+        </if>
+    </select>
+</mapper>

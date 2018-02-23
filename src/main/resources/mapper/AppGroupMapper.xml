@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="org.anowls.sys.mapper.AppGroupMapper">
+    <sql id="findCondition">
+        <where>
+            t.deleted = 0 and t.status = 1
+            <if test="title != null and title != ''">
+                <bind name="title" value="'%' + title + '%'"/>
+                AND (t.ag_code like #{title} or t.ag_name LIKE #{title} or t.ag_desc LIKE #{title})
+            </if>
+        </where>
+    </sql>
+    <sql id="baseSql">
+        select t.id,
+        t.work_id as workId,
+        t.ag_code as agCode,
+        t.ag_name as agName,
+        t.ag_desc as agDesc,
+        t.sort_number as agSort,
+        t.status
+        from sys_app_group t
+    </sql>
+
+    <select id="findOne" resultType="org.anowls.sys.domain.AppGroup">
+        <include refid="baseSql"/>
+        WHERE t.id = #{id}
+    </select>
+    <select id="findOneByCode" resultType="org.anowls.sys.domain.AppGroup">
+        <include refid="baseSql"/>
+        WHERE t.ag_code = #{code}
+    </select>
+    <select id="findAll" resultType="org.anowls.sys.domain.AppGroup">
+        <include refid="baseSql"/>
+        <include refid="findCondition"/>
+    </select>
+
+</mapper>

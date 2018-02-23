@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="org.anowls.sys.mapper.FeatureMapper">
+
+    <select id="getByRoleIdIn" resultType="org.anowls.sys.domain.Feature">
+        SELECT * FROM (
+        SELECT DISTINCT
+        t1.id,
+        t1.work_id as workId,
+        t1.app_id as appId,
+        t1.sm_id as smId,
+        t1.sf_code as sfCode,
+        t1.sf_name as sfName,
+        t1.sf_desc as sfDesc,
+        t1.is_menu as isMenu,
+        t1.sf_type as sfType,
+        t1.status as status,
+        t1.controller_name as controllerName,
+        t1.action_name as actionName,
+        t1.request_url as requestUrl
+        FROM system_feature t1
+        <if test="isAdmin == false">
+            INNER JOIN system_role_feature srf ON srf.sf_id = t1.id
+        </if>
+        where t1.deleted = 0 and t1.status = 1
+        <if test="isAdmin == false">
+            <if test="roleIds != null and roleIds.size() > 0">
+                AND srf.role_id IN (
+                <foreach collection="roleIds" item="roleId" separator=",">
+                    #{roleId}
+                </foreach>
+                )
+            </if>
+        </if>
+        ) t1
+        <where>
+            <if test="appLevel == 1 || appLevel == 2">
+                AND EXISTS(select sa.id from system_application sa WHERE sa.deleted = 0 AND sa.status = 1 AND sa.id =
+                t1.appId
+                AND sa.app_level = #{appLevel})
+            </if>
+        </where>
+    </select>
+
+    <select id="getByAppId" resultType="org.anowls.sys.domain.Feature">
+        SELECT
+        t1.id,
+        t1.work_id as workId,
+        t1.app_id as appId,
+        t1.sm_id as smId,
+        t1.sf_code as sfCode,
+        t1.sf_name as sfName,
+        t1.sf_desc as sfDesc,
+        t1.is_menu as isMenu,
+        t1.sf_type as sfType,
+        t1.status as status,
+        t1.controller_name as controllerName,
+        t1.action_name as actionName,
+        t1.request_url as requestUrl,
+        t1.status as status
+        from system_feature t1
+        where t1.app_id = #{appId}
+    </select>
+
+    <delete id="deleteByAppId">
+        DELETE FROM system_feature WHERE app_id = #{appId}
+    </delete>
+
+    <insert id="insertFeatures" databaseId="MySQL">
+        INSERT INTO
+        system_feature(id,app_id,sm_id,sf_code,sf_name,sf_desc,controller_name,action_name,request_url,is_menu,status,sf_type)
+        VALUES
+        <foreach collection="list" item="item" index="index" separator=",">
+            (#{item.id},#{item.appId},#{item.smId},#{item.sfCode},#{item.sfName},#{item.sfDesc},
+            #{item.controllerName},#{item.actionName},#{item.requestUrl},#{item.isMenu},#{item.status},#{item.sfType})
+        </foreach>
+    </insert>
+    <insert id="insertFeatures" databaseId="Oracle">
+        insert into system_feature
+        (id,app_id,sm_id,sf_code,sf_name,sf_desc,controller_name,action_name,request_url,is_menu,status,sf_type)
+        <foreach collection="list" item="item" index="index" separator="union all">
+            SELECT
+            #{item.id},
+            #{item.appId},
+            #{item.smId},
+            #{item.sfCode},
+            #{item.sfName},
+            #{item.sfDesc},
+            #{item.controllerName},
+            #{item.actionName},
+            #{item.requestUrl},
+            #{item.isMenu},
+            #{item.status},
+            #{item.sfType}
+            FROM dual
+        </foreach>
+    </insert>
+</mapper>

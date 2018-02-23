@@ -9,7 +9,7 @@ import org.anowls.sys.domain.view.SysEnumVO
 
 /**
  * <p>Title: sys-platform</p>
- * <p>Description: 这里填写描述信息</p>
+ * <p>Description: 数据字典-业务逻辑</p>
  * <p>Copyright: Copyright © 2017-2020 汉博德信息技术有限公司 All Rights Reserved</p>
  * <p>Company: http://www.hanboard.com</p>
  *
@@ -32,7 +32,7 @@ interface SysEnumService {
      * @param pagerQuery 分页参数
      * @return 数据字典分类列表
      */
-    fun query(pagerQuery : PageQuery) : SimplePage<SysEnum>
+    fun query(pagerQuery: PageQuery): SimplePage<SysEnumVO>
 
     /**
      * 根据数据字典分类ID查询数据字典分类数据项
@@ -117,7 +117,7 @@ interface SysEnumService {
     /**
      * 删除数据字典分类数据项
      *
-     * @param 数据字典数据项ID
+     * @param ids 数据字典数据项ID
      * @return 操作结果
      */
     fun deleteItem(ids : List<String>) : SimpleMessage

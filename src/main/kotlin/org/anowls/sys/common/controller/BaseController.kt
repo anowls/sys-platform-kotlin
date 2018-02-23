@@ -11,7 +11,7 @@ import org.springframework.web.context.request.ServletRequestAttributes
 import org.springframework.web.servlet.NoHandlerFoundException
 import javax.servlet.http.HttpServletRequest
 
-@ControllerAdvice(value = "org.anowls.sys.web")
+@ControllerAdvice("org.anowls.sys.web")
 open class BaseController {
 
     private fun getRequest() : HttpServletRequest{

@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.*
 
 /**
  * <p>Title: sys-platform</p>
- * <p>Description: 这里填写描述信息</p>
+ * <p>Description: 数据字典-访问</p>
  * <p>Copyright: Copyright © 2017-2020 汉博德信息技术有限公司 All Rights Reserved</p>
  * <p>Company: http://www.hanboard.com</p>
  *
@@ -24,7 +24,7 @@ import org.springframework.web.bind.annotation.*
  * @date 2018/1/26 0026
  */
 @RestController
-@RequestMapping(value = "/enum")
+@RequestMapping("/enum")
 @Api(tags = ["数据字典分类-控制层"])
 class SysEnumController(@Autowired private val sysEnumService : SysEnumService) {
 
@@ -39,7 +39,7 @@ class SysEnumController(@Autowired private val sysEnumService : SysEnumService) 
      * @return 数据字典分类数据项列表
      */
     @ApiOperation(value = "查询字典数据分类数据项", notes = "查询字典数据分类数据项")
-    @GetMapping(value = "/queryByCodes/{codes}")
+    @GetMapping("/queryByCodes/{codes}")
     fun queryByCodes(@ApiParam(value = "数据字典分类编码，多个以“,”分隔", required = true) @PathVariable codes : String) : SimpleMessage {
         return sysEnumService.queryByCodes(codes)
     }
@@ -56,7 +56,7 @@ class SysEnumController(@Autowired private val sysEnumService : SysEnumService) 
         ApiImplicitParam(name = "size", value = "每页显示的数据条数", dataType = "int", paramType = "query"),
         ApiImplicitParam(name = "filter", value = "查询条件（title=）", paramType = "query"),
         ApiImplicitParam(name = "order", value = "排序规则（id=asc）", paramType = "query")])
-    fun query(pagerQuery : PageQuery) : SimplePage<SysEnum> {
+    fun query(pagerQuery: PageQuery): SimplePage<SysEnumVO> {
         return  sysEnumService.query(pagerQuery)
     }
 
@@ -67,7 +67,7 @@ class SysEnumController(@Autowired private val sysEnumService : SysEnumService) 
      * @return 数据字典分类数据项列表
      */
     @ApiOperation(value = "查询数据字典分类数据项", notes = "根据数据字典分类ID查询数据字典分类数据项")
-    @RequestMapping(value = "/{id}", method = [RequestMethod.GET])
+    @RequestMapping("/{id}", method = [RequestMethod.GET])
     fun getById(@ApiParam(value = "数据字典ID", required = true) @PathVariable id : String) : SimpleMessage {
         return sysEnumService.getById(id)
     }
@@ -103,7 +103,7 @@ class SysEnumController(@Autowired private val sysEnumService : SysEnumService) 
      * @return 操作结果
      */
     @ApiOperation(value = "删除数据字典数据", notes = "删除数据字典数据")
-    @DeleteMapping(value = "/{id}")
+    @DeleteMapping("/{id}")
     fun delete(@ApiParam(value = "数据字典分类ID", required = true) @PathVariable id : String) : SimpleMessage {
         return sysEnumService.delete(id)
     }
@@ -114,7 +114,7 @@ class SysEnumController(@Autowired private val sysEnumService : SysEnumService) 
      * @param id 数据字典分类ID
      * @return 操作结果
      */
-    @PostMapping(value = "/enable/{id}")
+    @PostMapping("/enable/{id}")
     @ApiOperation(value = "启用数据字典分类", notes = "启用数据字典分类")
     fun enable(@ApiParam(value = "数据字典分类ID", required = true) @PathVariable id : String) : SimpleMessage {
         return sysEnumService.enable(id)
@@ -126,7 +126,7 @@ class SysEnumController(@Autowired private val sysEnumService : SysEnumService) 
      * @param id 数据字典分类ID
      * @return 操作结果
      */
-    @PostMapping(value = "/disable/{id}")
+    @PostMapping("/disable/{id}")
     @ApiOperation(value = "停用数据字典分类", notes = "停用数据字典分类")
     fun disable(@ApiParam(value = "数据字典分类ID", required = true) @PathVariable id : String) : SimpleMessage {
         return sysEnumService.disable(id)
@@ -138,7 +138,7 @@ class SysEnumController(@Autowired private val sysEnumService : SysEnumService) 
      * @param id 数据字典分类数据项ID
      * @return 数据字典分类数据项信息
      */
-    @GetMapping(value = "/item/{id}")
+    @GetMapping("/item/{id}")
     @ApiOperation(value = "根据数据字典分类数据项ID查询数据字典分类数据项信息", notes = "根据数据字典分类数据项ID查询数据字典分类数据项信息")
     fun getItemById(@ApiParam(value = "数据字典分类数据项ID", required = true) @PathVariable id : String) : SimpleMessage {
         return sysEnumService.getItemById(id)
@@ -151,7 +151,7 @@ class SysEnumController(@Autowired private val sysEnumService : SysEnumService) 
      * @return 数据字典分类数据项列表
      */
     @ApiOperation(value = "分页查询数据字典分类数据项", notes = "分页查询数据字典分类数据项")
-    @GetMapping(value = "/item")
+    @GetMapping("/item")
     @ApiImplicitParams(value = [
         ApiImplicitParam(name = "page", value = "第几页", dataType = "int", paramType = "query"),
         ApiImplicitParam(name = "size", value = "每页显示的数据条数", dataType = "int", paramType = "query"),
@@ -168,7 +168,7 @@ class SysEnumController(@Autowired private val sysEnumService : SysEnumService) 
      * @param enumItem 数据字典分类数据项
      * @return 操作结果
      */
-    @PostMapping(value = "/item")
+    @PostMapping("/item")
     @ApiOperation(value = "新增数据字典分类数据项", notes = "新增数据字典分类数据项")
     fun insertItem(@ApiParam(value = "数据字典数据项", required = true) @RequestBody enumItem : SysEnumItem) : SimpleMessage {
         return sysEnumService.insertItem(enumItem)
@@ -180,7 +180,7 @@ class SysEnumController(@Autowired private val sysEnumService : SysEnumService) 
      * @param enumItem 数据字典分类数据项
      * @return 操作结果
      */
-    @PutMapping(value = "/item")
+    @PutMapping("/item")
     @ApiOperation(value = "修改数据字典分类数据项", notes = "修改数据字典分类数据项")
     fun updateItem(@ApiParam(value = "数据字典分类数据项", required = true) @RequestBody enumItem : SysEnumItem) : SimpleMessage {
         return sysEnumService.updateItem(enumItem)
@@ -192,7 +192,7 @@ class SysEnumController(@Autowired private val sysEnumService : SysEnumService) 
      * @param 数据字典数据项ID
      * @return 操作结果
      */
-    @DeleteMapping(value = "/item/{id}")
+    @DeleteMapping("/item/{id}")
     @ApiOperation(value = "删除数据字典分类数据项", notes = "删除数据字典分类数据项")
     fun deleteItem(@ApiParam(value = "数据字典分类数据项ID", required = true) @PathVariable id : String) : SimpleMessage {
         return sysEnumService.deleteItem(Lists.newArrayList(id))
@@ -204,7 +204,7 @@ class SysEnumController(@Autowired private val sysEnumService : SysEnumService) 
      * @param id 数据字典分类数据项ID
      * @return 操作结果
      */
-    @PostMapping(value = "/item/enable/{id}")
+    @PostMapping("/item/enable/{id}")
     @ApiOperation(value = "启用数据字典分类数据项", notes = "启用数据字典分类数据项")
     fun enableItem(@ApiParam(value = "数据字典分类数据项ID", required = true) @PathVariable id : String) : SimpleMessage {
         return sysEnumService.enableItem(id)
@@ -216,7 +216,7 @@ class SysEnumController(@Autowired private val sysEnumService : SysEnumService) 
      * @param id 数据字典分类数据项ID
      * @return 操作结果
      */
-    @PostMapping(value = "/item/disable/{id}")
+    @PostMapping("/item/disable/{id}")
     @ApiOperation(value = "停用数据字典分类数据项", notes = "停用数据字典分类数据项")
     fun disableItem(@ApiParam(value = "数据字典分类数据项ID", required = true) @PathVariable id : String) : SimpleMessage {
         return sysEnumService.disableItem(id)

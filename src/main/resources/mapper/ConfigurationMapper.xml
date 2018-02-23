@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="org.anowls.sys.mapper.ConfigurationMapper">
+
+    <sql id="findCondition">
+        <where>
+            <if test="filter!=null">
+                <if test="filter.title != null and filter.title != ''">
+                    <bind name="title" value="'%' + filter.title + '%'"/>
+                    AND (t.cfg_key like #{filter.title} or t.cfg_value LIKE #{filter.title} or t.cfg_desc LIKE
+                    #{filter.title})
+                </if>
+                <if test="filter.orgId != null and filter.orgId != ''">
+                    AND t.orgId = #{filter.orgId}
+                </if>
+            </if>
+        </where>
+    </sql>
+    <sql id="baseSql">
+        SELECT t.*
+        FROM (
+        SELECT
+        t1.id as id,
+        t1.work_id as workId,
+        t1.data_type as dataType,
+        t1.cfg_key as scKey,
+        t1.cfg_value as scValue,
+        t1.cfg_desc as scDesc,
+        t1.status as status,
+        t1.org_id as orgId,
+        '' as orgName
+        FROM system_configuration t1 where t1.deleted=0 and t1.status=1 and t1.org_id is NULL
+        <if test="orgIds!=null and orgIds.size()>0">
+            union ALL
+            SELECT
+            t2.id as id,
+            t2.work_id as workId,
+            t2.data_type as dataType,
+            t2.cfg_key as scKey,
+            t2.cfg_value as scValue,
+            t2.cfg_desc as scDesc,
+            t2.status as status,
+            t2.org_id as orgId,
+            org.org_name as orgName
+            FROM system_configuration t2 LEFT JOIN system_organization org on org.ID = t2.ORG_ID
+            where t2.deleted=0 and t2.status=1 and t2.org_id is NOT NULL
+            AND t2.org_id in
+            <foreach collection="orgIds" item="item" separator="," open="(" close=")">
+                #{item}
+            </foreach>
+        </if>
+        ) t
+    </sql>
+    <select id="query" parameterType="java.util.Map"
+            resultType="org.anowls.sys.domain.Configuration">
+        SELECT
+        t.id as id,
+        t.work_id as workId,
+        t.data_type as dataType,
+        t.cfg_key as scKey,
+        t.cfg_value as scValue,
+        t.cfg_desc as scDesc,
+        t.status as status,
+        t.org_id as orgId,
+        so.org_name as orgName
+        FROM system_configuration t
+        LEFT JOIN system_organization so ON t.org_id = so.id
+        <where>
+            AND t.deleted=0 and t.status=1
+            <if test="filter!=null">
+                <if test="filter.title != null and filter.title != ''">
+                    <bind name="title" value="'%' + filter.title + '%'"/>
+                    AND (t.cfg_key like #{title} or t.cfg_value LIKE #{title} or t.cfg_desc LIKE #{title})
+                </if>
+                <if test="filter.orgId != null and filter.orgId != ''">
+                    AND t.org_id = #{filter.orgId}
+                </if>
+            </if>
+        </where>
+    </select>
+    <select id="getByScKey" resultType="org.anowls.sys.domain.Configuration">
+        SELECT
+        t.id as id,
+        t.work_id as workId,
+        t.data_type as dataType,
+        t.cfg_key as scKey,
+        t.cfg_value as scValue,
+        t.cfg_desc as scDesc,
+        t.status as status,
+        t.org_id as orgId,
+        so.org_name as orgName
+        FROM system_configuration t
+        LEFT JOIN system_organization so ON t.org_id = so.id
+        where t.cfg_key=#{scKey}
+    </select>
+    <select id="queryByKeys" resultType="org.anowls.sys.domain.Configuration">
+        <include refid="baseSql"/>
+        <where>
+            <if test="scKeys != null ">
+                and t.scKey in
+                <foreach collection="scKeys" item="item" separator="," open="(" close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </select>
+    <select id="getAll" resultType="org.anowls.sys.domain.Configuration">
+        <include refid="baseSql"/>
+    </select>
+</mapper>

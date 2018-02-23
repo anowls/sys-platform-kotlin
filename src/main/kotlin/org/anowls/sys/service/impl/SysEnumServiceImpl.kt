@@ -8,7 +8,7 @@ import org.anowls.sys.common.SimplePage
 import org.anowls.sys.common.message.SimpleMessage
 import org.anowls.sys.domain.SysEnum
 import org.anowls.sys.domain.SysEnumItem
-import org.anowls.sys.domain.view.SysEnumItemVO
+import org.anowls.sys.domain.view.SysEnumVO
 import org.anowls.sys.mapper.SysEnumItemMapper
 import org.anowls.sys.mapper.SysEnumMapper
 import org.anowls.sys.service.SysEnumService
@@ -17,7 +17,7 @@ import org.springframework.stereotype.Service
 
 /**
  * <p>Title: sys-platform</p>
- * <p>Description: 这里填写描述信息</p>
+ * <p>Description: 数据字典-业务逻辑实现</p>
  * <p>Copyright: Copyright © 2017-2020 汉博德信息技术有限公司 All Rights Reserved</p>
  * <p>Company: http://www.hanboard.com</p>
  *
@@ -34,10 +34,11 @@ class SysEnumServiceImpl(@Autowired private val sysEnumMapper : SysEnumMapper,
         return SimpleMessage.info(groupMap)
     }
 
-    override fun query(pagerQuery : PageQuery) : SimplePage<SysEnum> {
-        PageHelper.startPage<SysEnum>(pagerQuery.page, pagerQuery.size)
-        val sysEnums : List<SysEnum> = sysEnumMapper.findAll()
-        val pageInfo :  PageInfo<SysEnum> = PageInfo(sysEnums)
+    override fun query(pagerQuery: PageQuery): SimplePage<SysEnumVO> {
+        val filter = pagerQuery.convertFilterToMap()
+        PageHelper.startPage<SysEnum>(pagerQuery.page, pagerQuery.size, pagerQuery.convertSort())
+        val sysEnums: List<SysEnumVO> = sysEnumMapper.findAll(filter)
+        val pageInfo: PageInfo<SysEnumVO> = PageInfo(sysEnums)
         return SimplePage.convert(pageInfo)
     }
 
@@ -77,7 +78,7 @@ class SysEnumServiceImpl(@Autowired private val sysEnumMapper : SysEnumMapper,
 
 
     override fun queryItem(pageQuery : PageQuery ) : SimplePage<SysEnumItem> {
-        PageHelper.startPage<SysEnum>(pageQuery.page, pageQuery.size)
+        PageHelper.startPage<SysEnum>(pageQuery.page, pageQuery.size, pageQuery.convertSort())
         return SimplePage.convert(PageInfo(Lists.newArrayList()))
     }
 

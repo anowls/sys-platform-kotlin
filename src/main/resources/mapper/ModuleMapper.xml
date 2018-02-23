@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="org.anowls.sys.mapper.ModuleMapper">
+
+    <select id="getByRoleIdIn" resultType="org.anowls.sys.domain.view.ModuleVO">
+        SELECT * FROM (
+        SELECT DISTINCT t1.id as id,
+        t1.work_id as workId,
+        t1.app_id as appId,
+        t1.sm_code as smCode,
+        t1.sm_name as smName,
+        t1.sm_desc as smDesc,
+        t1.sort_number as smSort,
+        t1.status as status
+        FROM system_module t1
+        <if test="isAdmin == false">
+            INNER JOIN system_feature sf ON sf.sm_id = t1.id
+            INNER JOIN system_role_feature srf ON srf.sf_id= sf.id
+        </if>
+        WHERE t1.deleted = 0 AND t1.status = 1
+        <if test="isAdmin == false">
+            <if test="roleIds != null and roleIds.size() > 0">
+                AND srf.role_id IN (
+                <foreach collection="roleIds" item="roleId" separator=",">
+                    #{roleId}
+                </foreach>
+                )
+            </if>
+        </if>
+        ) t1
+        <where>
+            <if test="appLevel == 1 || appLevel == 2">
+                AND EXISTS(select sa.id from system_application sa WHERE sa.deleted = 0 AND sa.status = 1 AND sa.id =
+                t1.appId
+                AND sa.app_level = #{appLevel})
+            </if>
+        </where>
+        ORDER BY t1.smSort ASC
+    </select>
+
+    <select id="getByAppId" resultType="org.anowls.sys.domain.view.ModuleVO">
+        SELECT
+        t1.id,
+        t1.work_id AS workId,
+        t1.app_id AS appId,
+        t1.sm_code AS smCode,
+        t1.sm_name AS smName,
+        t1.sm_desc AS smDesc,
+        t1.sort_number AS smSort,
+        t1.status AS status
+        FROM system_module t1
+        WHERE t1.deleted=0 and t1.app_id = #{appId}
+        ORDER BY t1.sort_number
+    </select>
+
+    <delete id="deleteByAppId">
+        DELETE FROM system_module WHERE app_id = #{appId}
+    </delete>
+
+    <insert id="insertModules" databaseId="MySQL">
+        insert into system_module(id,app_id,sm_code,sm_name,sm_desc,status,sort_number) values
+        <foreach collection="list" item="item" separator=",">
+            (#{item.id},#{item.appId},#{item.smCode},#{item.smName},#{item.smDesc},#{item.status},#{item.smSort})
+        </foreach>
+    </insert>
+    <insert id="insertModules" databaseId="Oracle">
+        INSERT INTO system_module (id,app_id,sm_code,sm_name,sm_desc,status,sort_number)
+        <foreach collection="list" item="item" separator="union all">
+            SELECT #{item.id},#{item.appId},#{item.smCode},#{item.smName},#{item.smDesc},#{item.status},#{item.smSort}
+            FROM dual
+        </foreach>
+    </insert>
+</mapper>
